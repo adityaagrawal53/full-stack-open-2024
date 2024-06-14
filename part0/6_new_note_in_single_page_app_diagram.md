@@ -11,4 +11,6 @@
 
         Note right of browser: The new note is seperately visually added to the HTML using an event handler.
 
+        Note right of browser: Note that the same .js and .html code is still being used.
+
 ```

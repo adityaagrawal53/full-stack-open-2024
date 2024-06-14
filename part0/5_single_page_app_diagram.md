@@ -4,19 +4,9 @@
         participant browser
         participant server
 
-        browser->>server: POST https://studies.cs.helsinki.fi/exampleapp/new_note
-        Note left of server: We send them the new note in format "note=our_note_here"
-        activate server
-        server-->>browser: redirect to /exampleapp/notes
-        deactivate server
-        Note right of browser: Server sends 302 Code (redirect status response code)
-
-        Note right of browser: Now we just reload /notes page as in example, but with altered data.
-
-        browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/notes
+        browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/spa
         activate server
         server-->>browser: HTML document
-        deactivate server
         
         browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/main.css
         activate server
@@ -24,7 +14,7 @@
         deactivate server
         Note right of browser: The HTML document requires .js file for fetching and displaying all the notes. 
 
-        browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/main.js
+        browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/spa.js
         activate server
         server-->>browser: the JavaScript file
         deactivate server
