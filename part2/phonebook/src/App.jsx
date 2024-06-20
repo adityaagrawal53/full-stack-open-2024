@@ -124,7 +124,7 @@ const App = () => {
       personsService
         .create(newPerson)
         .then(response => {
-          console.log(response)
+          //console.log(response)
           setPersons(persons.concat(response))
           setNewName('')
           setNewNumber('')
