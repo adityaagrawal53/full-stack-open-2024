@@ -1,5 +1,17 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import personsService from "./services/persons"
+
+const Notification = ({ notification, style }) => {
+  if (notification === null) {
+    return null
+  }
+
+  return (
+    <div className={style}>
+      {notification}
+    </div>
+  )
+}
 
 const Filter = ({ filterNumber, handleFilterChange }) => {
   return (
@@ -25,54 +37,119 @@ const PersonForm = ({ addPerson, newName, handleNameChange, newNumber, handleNum
   )
 }
 
-const Persons = ({ persons }) => {
+const Persons = ({ persons, deletePerson }) => {
   return (
     <ul>
-      {persons.map((person) => ( <li key={person.id}>{person.name} {person.number}</li>))}
+      {persons.map((person) => <Person key={person.id} person={person} deletePerson={() => deletePerson(person.id)}/>)}
     </ul>)
 }
 
+const Person = ({ person, deletePerson }) => { 
+  return (
+    <li>
+        {person.name} {person.number}
+        <button onClick={deletePerson}>delete</button>
+    </li>
+  )
+}
+
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '040-123456', id: 1 },
-    { name: 'Ada Lovelace', number: '39-44-5323523', id: 2 },
-    { name: 'Dan Abramov', number: '12-43-234345', id: 3 },
-    { name: 'Mary Poppendieck', number: '39-23-6423122', id: 4 }
-  ]);
+  const [persons, setPersons] = useState([])
 
-  const [newName, setNewName] = useState('');
-  const handleNameChange = (event) => { setNewName(event.target.value); };
+  const [newName, setNewName] = useState('')
+  const handleNameChange = (event) => { setNewName(event.target.value) }
 
-  const [newNumber, setNewNumber] = useState('');
-  const handleNumberChange = (event) => { setNewNumber(event.target.value); };
+  const [newNumber, setNewNumber] = useState('')
+  const handleNumberChange = (event) => { setNewNumber(event.target.value) }
 
-  const [filterNumber, setFilterNumber] = useState('');
-  const handleFilterChange = (event) => { setFilterNumber(event.target.value); };
+  const [filterNumber, setFilterNumber] = useState('')
+  const handleFilterChange = (event) => { setFilterNumber(event.target.value) }
 
-  const what = () => {   
-    //console.log('effect')    
-    axios      
-      .get('http://localhost:3001/persons')      
-      .then(response => {        
-        //console.log('promise fulfilled')        
-        setPersons(response.data)      
-      })  
-  } 
-  
-  useEffect(what, [])
+  const [style, setStyle] = useState('error')
+
+  const [notification, setNotification] = useState(null)
+  const notifyGood = (message) => { 
+    setNotification( message)
+    setStyle('good')   
+    setTimeout(() => {
+      setNotification(null)        
+    }, 5000)
+  }
+  const notifyError = (message) => { 
+    setNotification( message ) 
+    setStyle('error')       
+    setTimeout(() => {          
+      setNotification(null)        
+    }, 5000)
+  }
+
+  useEffect(() => {
+    const nonExisting = {
+      id: 10000,
+      name: 'fake',
+      number: '1234',
+    }
+    personsService.getAll()
+      .then(persons => {
+        setPersons(persons.concat(nonExisting))
+      })
+      .catch(error => {
+        notifyError(`We were unable to load the phonebook. Oops!'`)
+      })
+  }, [])
 
   const addPerson = (event) => {
-    event.preventDefault();
-    if (persons.some(_.name === newName)) {
-      alert(`${newName} is already added to phonebook`);
-    } 
+    event.preventDefault()
+    const oldPerson = persons.find(person => person.name === newName)
+    if (oldPerson) {
+      //alert(`${newName} is already added to phonebook`)
+      if(window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)){
+        const updated = {...oldPerson, number: newNumber}
+        personsService.update(oldPerson.id, updated)
+          .then( response => { 
+            setPersons(persons.map(person => person.id !== oldPerson.id ? person : response))
+            setNewName('')
+            setNewNumber('')
+            notifyGood(`Successfully updated ${oldPerson.name} with new number`)
+          })
+          .catch(error => {
+            notifyError(`We were not able to find ${oldPerson.name} on the server.`)
+            setPersons(persons.filter(n => n.id !== oldPerson.id)) 
+          })
+          
+      }
+    }
     else {
-      const newPerson = { name: newName, number: newNumber, id: 1 + Math.max(...persons.map(person => person.id)) };
-      setPersons(persons.concat(newPerson));
-      setNewName('');
-      setNewNumber('');
-    } 
+      const newPerson = { name: newName, number: newNumber }
+      personsService
+        .create(newPerson)
+        .then(response => {
+          console.log(response)
+          setPersons(persons.concat(response))
+          setNewName('')
+          setNewNumber('')
+          notifyGood(`Successfully added ${newName}.`)        
+        })
+        .catch(error => {
+          notifyError(`We were not able to create a contact for ${newName}.`) 
+          // maybe re-get the details from json server here?  
+        })
+    }
   }
+
+  const deletePerson = (id) => { 
+    if (window.confirm("Are you sure you want to delete this person?")) { 
+      personsService.delete_(id).then(() => { 
+        setPersons(persons.filter(person => person.id !== id))
+        notifyGood(`Successfully deleted the contact with id '${id}'`)
+      })
+      .catch(error => {
+        notifyError(`We were not able to find a contact for id '${id}.'`) 
+        setPersons(persons.filter(n => n.id !== id))        
+      })
+    }
+  }
+
 
   const personsFiltered = persons.filter(person =>
     person.name.toLowerCase().includes(filterNumber.toLowerCase())
@@ -80,14 +157,15 @@ const App = () => {
 
   return (
     <div>
+      <Notification notification={notification} style={style}/>
       <h2>Phonebook</h2>
       <Filter filterNumber={filterNumber} handleFilterChange={handleFilterChange} />
       <h3>Add a new</h3>
       <PersonForm addPerson={addPerson} newName={newName} handleNameChange={handleNameChange} newNumber={newNumber} handleNumberChange={handleNumberChange} />
       <h3>Numbers</h3>
-      <Persons persons={personsFiltered} />
+      <Persons persons={personsFiltered} deletePerson={deletePerson}/>
     </div>
   )
 }
 
-export default App;
+export default App
