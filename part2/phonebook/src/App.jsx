@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react'
+import axios from 'axios'
 
 const Filter = ({ filterNumber, handleFilterChange }) => {
   return (
@@ -48,6 +49,18 @@ const App = () => {
   const [filterNumber, setFilterNumber] = useState('');
   const handleFilterChange = (event) => { setFilterNumber(event.target.value); };
 
+  const what = () => {   
+    //console.log('effect')    
+    axios      
+      .get('http://localhost:3001/persons')      
+      .then(response => {        
+        //console.log('promise fulfilled')        
+        setPersons(response.data)      
+      })  
+  } 
+  
+  useEffect(what, [])
+
   const addPerson = (event) => {
     event.preventDefault();
     if (persons.some(_.name === newName)) {
@@ -58,7 +71,7 @@ const App = () => {
       setPersons(persons.concat(newPerson));
       setNewName('');
       setNewNumber('');
-    }
+    } 
   }
 
   const personsFiltered = persons.filter(person =>
