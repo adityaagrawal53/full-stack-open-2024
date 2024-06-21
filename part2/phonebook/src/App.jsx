@@ -84,14 +84,14 @@ const App = () => {
   }
 
   useEffect(() => {
-    const nonExisting = {
+    /*const nonExisting = {
       id: 10000,
       name: 'fake',
       number: '1234',
-    }
+    }*/
     personsService.getAll()
       .then(persons => {
-        setPersons(persons.concat(nonExisting))
+        setPersons(persons) //.concat(nonExisting))
       })
       .catch(error => {
         notifyError(`We were unable to load the phonebook. Oops!'`)
