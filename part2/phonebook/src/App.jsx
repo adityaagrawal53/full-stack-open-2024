@@ -131,8 +131,7 @@ const App = () => {
           notifyGood(`Successfully added ${newName}.`)        
         })
         .catch(error => {
-          notifyError(`We were not able to create a contact for ${newName}.`) 
-          // maybe re-get the details from json server here?  
+          notifyError(`${error.response.data.error}`) 
         })
     }
   }
