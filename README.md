@@ -9,9 +9,9 @@ part 3 - done 23.06.2024 (22/22)
 part 4 - done 26.06.2024 (23/23)  
 part 5 - done 08.07.2024 (22/23)  
 part 6 - done 09.07.2024 (22/24)  
-part 7 - ongoing (0/21)
+part 7 - done 10.07.2024 (9/21)
 
-total - 129/153
+total - 138/153
 
 ```
 json-server --port 3001 --watch db.json
